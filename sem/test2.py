@@ -1,0 +1,44 @@
+from bs4 import BeautifulSoup
+from fake_useragent import UserAgent
+from pprint import pprint
+import requests
+
+ua = UserAgent()
+
+url = "https://gb.ru"
+headers = {"User-Agent": ua.random}
+params = {"page": 1}
+
+# response = requests.get(url + "/posts", headers=headers, params=params)
+#
+# soup = BeautifulSoup(response.text, "html.parser")
+#
+# posts = soup.findAll("div", {"class": "post-item"})
+# print(len(posts))
+
+all_posts = []
+
+while True:
+    response = requests.get(url + "/posts", headers=headers, params=params)
+    soup = BeautifulSoup(response.text, "html.parser")
+    posts = soup.findAll("div", {"class": "post-item"})
+    if not posts:
+        break
+
+    for post in posts:
+        post_info = {}
+
+        name_info = post.find("a", {"class": "post-item__title"})
+        post_info["name"] = name_info.getText()
+        post_info["url"] = url + name_info.get("href")
+
+        add_info = post.find("div", {"class": "text-muted"}).findChildren("span")
+        post_info["views"] = int(add_info[0].getText())
+        post_info["comments"] = int(add_info[1].getText())
+
+        all_posts.append(post_info)
+    print(f"Обработана {params['page']} страница")
+    params["page"] += 1
+
+# pprint(len(all_posts))
+pprint(all_posts)
